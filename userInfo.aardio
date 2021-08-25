@@ -1,0 +1,378 @@
+//用户列表
+namespace userInfo;
+
+import dbinfo;
+import config;
+import console;
+import math;
+
+getUserList = function(){
+    var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,uid,pwd,customerCode,flag,ownercode
+	from tmskuser where isdelete = 'N'`;
+	var t,err = db.getTable(sql);
+	//LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+
+getUserInfo = function(id){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,uid,pwd,customerCode,flag,ownercode
+	from tmskuser where isdelete = 'N' and id=`++id;
+	var t,err = db.getTableFirst(sql);
+	//LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+
+getUserInfoByUid = function(company,uid){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,uid,pwd,customerCode,flag,ownercode
+	from tmskuser where isdelete = 'N' and company ='`+company+`' and uid='`++uid+"'";
+	//console.log(sql)
+	var t,err = db.getTableFirst(sql);
+	//LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+
+getUserNoLogin = function(){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,uid,pwd,customerCode,flag,ownercode
+	from tmskuser where isdelete = 'N' and loginflag = 'N'`;
+	var t,err = db.getTable(sql);
+	//LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+
+getUserNoLogin1 = function(){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,uid,pwd,customerCode,flag,ownercode
+	from tmskuser where isdelete = 'N' and loginflag1 = 'N'`;
+	var t,err = db.getTable(sql);
+	//LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+
+getUserLogin = function(){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,uid,pwd,customerCode,flag,cookie,auth,auth1,ownercode
+	from tmskuser where isdelete = 'N' and loginflag = 'Y'`;
+	var t,err = db.getTable(sql);
+	//LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+
+getUserLogin1 = function(){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,uid,pwd,customerCode,flag,cookie,auth,auth1,ownercode
+	from tmskuser where isdelete = 'N' and loginflag1 = 'Y'`;
+	var t,err = db.getTable(sql);
+	//LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+
+getUserCount = function(){
+    var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,uid,pwd,customerCode,flag
+	from tmskuser where isdelete = 'N' and flag ='N'`;
+	var t,err = db.getTable(sql);
+	LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+
+
+getTaskMasterList = function(job){
+    var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,taskname,port,portcode,ctntype,shipmentPriceCalculationDate,begintime,endtime,status,job
+	from taskmaster where isdelete = 'N' and [status] ='Y' and job like '`+job+`'`;
+	var t,err = db.getTable(sql);
+	LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+
+getTaskMasterOneList = function(){
+    var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select top 1 id,port,portcode,shipmentPriceCalculationDate,begintime,endtime,status
+	from taskmaster where isdelete = 'N' and [status] ='Y' and and job = 'N'`;
+	var t,err = db.getTableFirst(sql);
+	LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+
+getTaskDetailList = function(mid){
+    var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,mid,maxprice,[status] from taskdetail where mid =`++mid +` and [status] <> 'Y'`;
+	var t,err = db.getTable(sql);
+	//LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+
+getTaskInfo = function(mid,id,ucode){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var tab = {};
+	tab['from'] = config.__port;
+	tab['commodity'] = config.__commodity;
+	var sql = "select portname as [name],mskid maerskGeoId,countryCode,'CY' maerskServiceMode,portcode maerskRkstCode from tport where tport.portcode =(select portcode from taskmaster where id ="++mid+") ";
+	var t = db.getTableFirst(sql);
+	tab['to'] = t;
+	sql = "select isoCode,ctnname as [name],ctsize as [size],cttype as [type],weight,1 as quantity,isReefer,isNonOperatingReefer,isShipperOwnedContainer from taskdetail d,tcontainer t where d.id = "++id+" and d.ctntype =t.ctntype";
+	t = db.getTable(sql);
+	tab['containers'] = t;
+	sql = "select shipmentPriceCalculationDate from taskmaster where id =" ++mid;
+	t = db.getTable(sql);
+	tab['unit'] = "KG";
+	tab['shipmentPriceCalculationDate'] = t['shipmentPriceCalculationDate'];
+	tab['brandCode'] = config.__brandCode;
+	tab['customerCode'] = ucode//"40600161733";
+	
+	return ..web.json.stringify(tab); 
+}
+
+getTaskInfoForLogin = function(ucode){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var tab = {};
+	tab['from'] = config.__port;
+	tab['commodity'] = ..web.json.strip(config.__commodity);
+	//tab['commodity']['dangerousDetails'] = {};
+	var sql = "select max(id) id from taskmaster where isdelete = 'N' and [status] ='Y'";
+	var mid = db.getTableFirst(sql)["id"];
+	sql = "select portname as [name],mskid maerskGeoId,countryCode,'CY' maerskServiceMode,portcode maerskRkstCode from tport where tport.portcode =(select portcode from taskmaster where id ="++mid+") ";
+	var t = db.getTableFirst(sql);
+	tab['to'] = t;
+	sql = "select isoCode,ctnname as [name],t.ctsize as [size],t.cttype as [type],weight,1 as quantity,isReefer,isNonOperatingReefer,isShipperOwnedContainer from taskmaster d,tcontainer t where d.id = "++mid+" and d.ctntype =t.ctntype";
+	t = db.getTable(sql);
+	tab['containers'] = t;
+	sql = "select shipmentPriceCalculationDate from taskmaster where id =" ++mid;
+	t = db.getTableFirst(sql);
+	tab['unit'] = "KG";
+	tab['shipmentPriceCalculationDate'] = tostring(..time().addday(2),'%Y-%m-%d')//t['shipmentPriceCalculationDate'];
+	tab['brandCode'] = config.__brandCode;
+	tab['customerCode'] = ucode//"40600161733";
+	//LOGGER_SQL.debug(..web.json.stringify(tab,,false))
+	return ..web.json.stringify(tab,,false); 
+}
+
+upTaskMaster = function(mid,flag1){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = "update taskMaster set flag = 'Y' where id ="++mid;
+}
+
+getUserOne = function(){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,uid,pwd,customerCode,flag,cookie,auth,auth1
+	from tmskuser where isdelete = 'N' and flag = 'N' and loginflag='Y'  and loginflag1 ='Y' and 
+	freetime = (select min(freetime) from tmskuser u where u.isdelete ='N' and flag = 'N' and loginflag='Y'  and loginflag1 ='Y')`;
+	//var t,err = db.getTableFirst(sql);
+	var t,err = db.getTableFirst(sql);
+	//console.dump(t)
+	//LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+
+getUserFreeOne = function(company){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,uid,pwd,customerCode,flag
+	from tmskuser where isdelete = 'N' and company='`+company+"'";
+	//console.log(sql)
+	//var t,err = db.getTableFirst(sql);
+	var t,err = db.getTable(sql);
+	
+    math.randomize()
+    r = math.random(1,#t);
+	//console.dump(t)
+	//LOGGER_SQL.debug(t,err)
+	return t[r],err; 
+}
+
+/*
+getUserFreeOne = function(){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = `select id,uid,pwd,customerCode,flag,cookie,auth,auth1
+	from tmskuser where isdelete = 'N' and flag = 'N' and loginflag='Y' and loginflag1 ='Y'`;
+	//var t,err = db.getTableFirst(sql);
+	var t,err = db.getTableFirst(sql);
+	//console.dump(t)
+	//LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+*/
+
+/*
+getUserFreeOne = function(uid){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = "select id,uid,pwd,customerCode,flag,cookie,auth,auth1
+	from tmskuser where isdelete = 'N' and uid = '"+uid+"'";
+	//var t,err = db.getTableFirst(sql);
+	var t,err = db.getTableFirst(sql);
+	//console.dump(t)
+	//LOGGER_SQL.debug(t,err)
+	return t,err; 
+}
+*/
+
+upUserLogin = function(uid,flag1){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = "update tmskuser set loginflag ='"+flag1+"',flag = 'N' where uid = '"+uid+"'";
+	var ret,err = db.exec(sql);
+	return ret,err;
+}
+
+upUserLogin1 = function(uid,flag1){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = "update tmskuser set loginflag1 ='"+flag1+"',flag = 'N' where uid = '"+uid+"'";
+	var ret,err = db.exec(sql);
+	return ret,err;
+}
+
+upUserAuth = function(uid,vtype,auth,frJwt,usiJwt){
+    var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+    var sql="";
+    /*
+if(frJwt == null){
+        frJwt = 'NULL';
+    }
+*/
+	if(vtype=='cookie'){
+		sql = "update tmskuser set cookie ='"+tostring(auth)+"' where uid ='"+ uid +"'";
+	}
+	if(vtype=='auth'){
+		sql = "update tmskuser set auth ='"+tostring(auth)+"',frJwt='"+frJwt+"',usiJwt='"+usiJwt+"' where uid ='"+ uid +"'";
+	}
+	if(vtype=='auth1'){
+		if(usiJwt == null){
+			sql = "update tmskuser set auth1 ='"+tostring(auth)+"' where uid ='"+ uid +"'";
+		}else {
+			sql = "update tmskuser set auth1 ='"+tostring(auth)+"',usiJwt1='"+usiJwt+"' where uid ='"+ uid +"'";
+		}
+		
+	}
+	var ret,err = db.exec(sql);
+	return ret,err;
+}
+
+upUserUse = function(uid){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = "update tmskuser set flag ='Y' where uid = '"+uid+"'";
+	var ret,err = db.exec(sql);
+	return ret,err;
+}
+
+
+upUserFree = function(uid){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql = "update tmskuser set flag ='N',freetime=getdate() where uid = '"+uid+"'";
+	//LOGGER_SQL.debug(sql)
+	var ret,err = db.exec(sql);
+	return ret,err;
+}
+
+
+/**intellisense(userInfo)
+getTaskMasterList(.() = 未运行的主任务列表
+getTaskDetailList(.(mid) = 得到主任务mid的明细列表
+getTaskInfo(.(mid,id,ucode) = 得到任务明细的详细数据
+getTaskInfoForLogin(.(ucode) = 用于测试账号登录的详细数据
+getUserInfo(.(id) = 获取用户信息
+getUserInfoByUid(.(company,uid) = 获取用户信息
+getUserList(.() = 用户列表
+getUserNoLogin(.() = 没有登录的用户列表
+getUserLogin(.() = 已登录用户列表
+getUserCount(.() = MSK用户列表
+getUserFreeOne(.(company) = 获取空闲的MSK账号
+getUserOne(.() = 获取最长时间空闲的MSK账号
+upUserLogin(.(uid,flag) = 设置登录状态
+upUserAuth(.(uid,auth,cookie) = 设置登陆后的COOKIE和AUTH信息
+upUserFree(.(uid) = 设置MSK用户空闲
+upUserUse(.(uid) = 设置MSK用户使用
+end intellisense**/
+
+/*
+getTaskMaster = function(vtype,vuser){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql ="select ";
+	LOGGER_SQL.debug(sql);
+	var t,err = db.getTable(sql);
+	LOGGER_SQL.debug(t,err)
+	return t,err;
+}
+
+addTaskMaster = function(t){
+	var db,flag,err = dbinfo.dbinit();
+	if (!flag){
+		return false,err;
+	}
+	var sql ="";
+}
+*/
+
